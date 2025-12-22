@@ -12,6 +12,7 @@ import { AuthProvider } from './context/AuthContext';
 import RegisterPage from './pages/RegisterPage'
 import PropertyDetailsPage from './pages/PropertyDetailsPage'
 import Navbar from './components/Navbar'
+import AdminPanel from './components/AdminPanel';
 
 
 
@@ -31,6 +32,7 @@ function App() {
       <Route path="/loginPage" element={<LoginPage />} />
       <Route path="/Property/:id" element={<PropertyDetailsPage />} />
       <Route path="/RegisterPage" element={<RegisterPage />} />
+      <Route path="/admin" element={<AdminPanel />} />
 
       {/* صفحات محمية */}
       {/* <Route element={<ProtectedRoute />}> */}
