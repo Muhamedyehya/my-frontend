@@ -1,6 +1,9 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+// ضع هنا إيميل الأدمن المصرّح (أو لاحقًا استخدم متغير بيئة)
+const ADMIN_EMAIL = "admin@gmail.com";
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -17,58 +20,47 @@ export const AuthProvider = ({ children }) => {
   const [email, setEmail] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Helper: تحدد لو الإيميل هو إيميل المشرف أو لو فيه دور محفوظ
-  const checkIfAdmin = (mail) => {
-    // إذا عايز تستخدم أكثر من إيميل admin أضفهم هنا أو اقرأ role من localStorage
-    const adminEmails = ['admin@gmail.com'];
-    if (!mail) return false;
-    return adminEmails.includes(mail.toLowerCase());
-  };
-
   useEffect(() => {
-    // على بداية التشغيل نقرأ ما محفوظ في localStorage (توافق مع النسخ القديمة)
+    // عند تحميل المكوّن نقرأ القيم من localStorage
     const savedToken = localStorage.getItem('token');
     const savedEmail = localStorage.getItem('email');
 
     if (savedToken && savedToken !== 'undefined') {
       setToken(savedToken);
       setIsLoggedIn(true);
+      setEmail(savedEmail || null);
+      setIsAdmin((savedEmail || '') === ADMIN_EMAIL);
     } else {
+      // تنظف القيم إذا كانت غير صحيحة
+      localStorage.removeItem('token');
+      localStorage.removeItem('isLoggedIn');
+      // لا نمسح الايميل لأن العميل قد يريد تسجيل الخروج فقط
       setToken(null);
       setIsLoggedIn(false);
-      localStorage.removeItem('token');
-    }
-
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setIsAdmin(checkIfAdmin(savedEmail));
-    } else {
       setEmail(null);
       setIsAdmin(false);
     }
   }, []);
 
-  // login: يدعم استدعاء بدون باراميتر (للتوافق) أو مع token/email
-  const login = (newToken, userEmail) => {
-    // إذا اتسلم token في النداء - خزّنه - وإلا نحاول قراءة الموجود في localStorage
+  // login: نقبل توكن وايميل (الايميل اختياري لأن الكود أحيانا يخزن الايميل قبل استدعاء login)
+  const login = (newToken, newEmail) => {
     const tokenToUse = newToken || localStorage.getItem('token');
+    const emailToUse = newEmail || localStorage.getItem('email');
+
     if (!tokenToUse || tokenToUse === 'undefined') {
-      console.warn('AuthProvider.login called without valid token. Falling back to localStorage.');
-    } else {
-      localStorage.setItem('token', tokenToUse);
-      setToken(tokenToUse);
-      setIsLoggedIn(true);
+      console.error('❌ Token is invalid:', tokenToUse);
+      return;
     }
 
-    const emailToUse = userEmail || localStorage.getItem('email');
-    if (emailToUse) {
-      localStorage.setItem('email', emailToUse);
-      setEmail(emailToUse);
-      setIsAdmin(checkIfAdmin(emailToUse));
-    } else {
-      setEmail(null);
-      setIsAdmin(false);
-    }
+    // خزّن التوكن والايميل
+    localStorage.setItem('token', tokenToUse);
+    if (emailToUse) localStorage.setItem('email', emailToUse);
+    localStorage.setItem('isLoggedIn', 'true');
+
+    setToken(tokenToUse);
+    setEmail(emailToUse || null);
+    setIsLoggedIn(true);
+    setIsAdmin((emailToUse || '') === ADMIN_EMAIL);
   };
 
   const logout = () => {
@@ -77,20 +69,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('email');
     localStorage.removeItem('isLoggedIn');
     setToken(null);
-    setEmail(null);
     setIsLoggedIn(false);
+    setEmail(null);
     setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{
-      isLoggedIn,
-      token,
-      email,
-      isAdmin,
-      login,
-      logout
-    }}>
+    <AuthContext.Provider value={{ isLoggedIn, token, email, isAdmin, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
