@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FaEnvelope, FaLock, FaSignInAlt, FaEye, FaEyeSlash, FaUser, FaHome } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const { login, logout } = useAuth();
@@ -12,7 +13,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-
+  const { isAdmin } = useAuth();
   const colors = {
     primary: "#1e40af",
     secondary: "#3b82f6",
@@ -424,24 +425,26 @@ const LoginPage = () => {
             </button>
           </div>
 
-          <div style={{
-            marginTop: "30px",
-            padding: "20px",
-            background: "rgba(255, 255, 255, 0.04)",
-            borderRadius: "12px",
-            textAlign: "center",
-            fontSize: "0.95rem",
-            color: "#94a3b8",
-            border: "1px solid rgba(255, 255, 255, 0.08)"
-          }}>
-            <strong style={{ color: colors.accent }}>ملاحظة:</strong><br />
-            <strong style={{ color: colors.accent }}>للمسؤولين فقط</strong>
-          </div>
+          {isAdmin && (
+            <div style={{ 
+              marginTop: "30px",
+          	padding: "20px",
+          	background: "rgba(255, 255, 255, 0.04)",
+          	borderRadius: "12px",
+          	textAlign: "center",
+          	fontSize: "0.95rem",
+          	color: "#94a3b8",
+          	border: "1px solid rgba(255, 255, 255, 0.08)"  }}>
+              <strong style={{ color: colors.accent }}>ملاحظة:</strong><br />
+              <strong style={{ color: colors.accent }}>للمسؤولين فقط</strong>
+            </div>
+          )}
 
         </div>
       </div>
     </div>
   );
 };
+
 
 export default LoginPage;
