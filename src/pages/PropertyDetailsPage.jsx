@@ -5,13 +5,14 @@ import {
   FaMapMarkerAlt, FaBed, FaBath, FaRulerCombined, FaDollarSign,
   FaImage, FaTimes, FaEdit, FaTrash, FaSave, FaSignOutAlt, FaArrowLeft
 } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = 'http://localhost:5000';
 
 const PropertyDetailsPage = ( ) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -612,4 +613,5 @@ const PropertyDetailsPage = ( ) => {
 };
 
 export default PropertyDetailsPage;
+
 
