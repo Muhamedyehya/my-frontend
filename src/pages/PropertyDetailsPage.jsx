@@ -59,14 +59,6 @@ const PropertyDetailsPage = ( ) => {
     transition: "all 0.4s ease"
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-    setIsAdmin(!!token);
-    fetchPropertyData();
-    return () => {
-      imagePreviews.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [id]);
 
   const fetchPropertyData = async () => {
     setLoading(true);
@@ -613,5 +605,6 @@ const PropertyDetailsPage = ( ) => {
 };
 
 export default PropertyDetailsPage;
+
 
 
