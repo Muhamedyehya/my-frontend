@@ -11,20 +11,25 @@ export const useAuth = () => {
   return context;
 };
 
-// helper: parse JWT payload (safe)
-function parseJwt(token) {
+/**
+ * Helper: يحاول يفك الـ JWT token ويعيد الـ payload ككائن JS
+ * إذا لم يكن token JWT أو حدث خطأ، يرجع null
+ */
+function decodeJwtPayload(token) {
   try {
-    const base64Url = token.split('.')[1];
-    if (!base64Url) return null;
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(payload64)
         .split('')
         .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    return JSON.parse(jsonPayload);
+    return JSON.parse(json);
   } catch (e) {
+    console.warn('JWT decode failed:', e);
     return null;
   }
 }
@@ -33,71 +38,94 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [email, setEmail] = useState(null);
 
   useEffect(() => {
-    // تحقق أولي عند تحميل الـ app
+    // عند البداية نحاول نقرأ التوكن من localStorage
     const savedToken = localStorage.getItem('token');
-
-    // نظّف أي قيمة قديمة
-    if (localStorage.getItem('authToken')) {
-      localStorage.removeItem('authToken');
-    }
+    const savedEmail = localStorage.getItem('email');
 
     if (savedToken && savedToken !== 'undefined') {
       setToken(savedToken);
       setIsLoggedIn(true);
-      const payload = parseJwt(savedToken);
-      const checkAdmin =
-        payload &&
-        (payload.isAdmin === true ||
-          payload.role === 'admin' ||
-          (payload.email && payload.email.toLowerCase() === 'admin@gmail.com'));
-      setIsAdmin(!!checkAdmin);
+
+      // حاول نفك الـ JWT ونعرف isAdmin من البايلود
+      const payload = decodeJwtPayload(savedToken);
+      if (payload) {
+        // إذا الباك إند وضع claim اسمه isAdmin داخل التوكن نستخدمه
+        if (payload.isAdmin) {
+          setIsAdmin(true);
+        } else {
+          // كحل احتياطي: لو البايلود يحتوي إيميل ادمن معين
+          if (payload.email && payload.email === 'admin@gmail.com') {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
+        }
+        if (payload.email) setEmail(payload.email);
+      } else {
+        // لو ما في توكن بصيغة JWT، نستخدم savedEmail كحل مؤقت
+        if (savedEmail && savedEmail === 'admin@gmail.com') {
+          setIsAdmin(true);
+          setEmail(savedEmail);
+        } else {
+          setIsAdmin(false);
+        }
+      }
     } else {
-      // تأكد من تنظيف التخزين إن لم يوجد توكن صالح
+      // نظف
       localStorage.removeItem('token');
       localStorage.removeItem('isLoggedIn');
       setToken(null);
       setIsLoggedIn(false);
       setIsAdmin(false);
+      setEmail(null);
     }
   }, []);
 
-  // login يمكن استدعاؤه مع توكن أو بدون (يرجع لlocalStorage)
+  /**
+   * login: نحط التوكن في localStorage ونحدّث الحالات
+   * @param {string} newToken - توكن JWT من السيرفر
+   */
   const login = (newToken) => {
-    const tokenToUse = newToken || localStorage.getItem('token');
-    if (!tokenToUse || tokenToUse === 'undefined') {
-      console.error('❌ Token is invalid:', tokenToUse);
+    if (!newToken || newToken === 'undefined') {
+      console.error('❌ Token is invalid:', newToken);
       return;
     }
 
-    // احفظ التوكن وحدّث الحالة
-    localStorage.setItem('token', tokenToUse);
-    localStorage.setItem('isLoggedIn', 'true');
-    setToken(tokenToUse);
-    setIsLoggedIn(true);
+    try {
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+      setIsLoggedIn(true);
 
-    const payload = parseJwt(tokenToUse);
-    const checkAdmin =
-      payload &&
-      (payload.isAdmin === true ||
-        payload.role === 'admin' ||
-        (payload.email && payload.email.toLowerCase() === 'admin@gmail.com'));
-    setIsAdmin(!!checkAdmin);
+      const payload = decodeJwtPayload(newToken);
+      if (payload) {
+        setEmail(payload.email || null);
+        setIsAdmin(Boolean(payload.isAdmin) || (payload.email === 'admin@gmail.com'));
+        if (payload.email) localStorage.setItem('email', payload.email);
+      } else {
+        // fallback: لا يمكن الوثوق به لفترات طويلة
+        const maybeEmail = localStorage.getItem('email');
+        setIsAdmin(maybeEmail === 'admin@gmail.com');
+      }
+    } catch (e) {
+      console.error('Login error:', e);
+    }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('authToken');
     localStorage.removeItem('email');
     localStorage.removeItem('isLoggedIn');
     setToken(null);
     setIsLoggedIn(false);
     setIsAdmin(false);
+    setEmail(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, token, isAdmin, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, token, isAdmin, email, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
