@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FaEnvelope, FaLock, FaSignInAlt, FaEye, FaEyeSlash, FaUser, FaHome } from 'react-icons/fa';
-
+import { apiUrl } from '../api';
 
 const LoginPage = () => {
   const { login, logout } = useAuth();
@@ -448,4 +448,5 @@ const LoginPage = () => {
 
 
 export default LoginPage;
+
 
