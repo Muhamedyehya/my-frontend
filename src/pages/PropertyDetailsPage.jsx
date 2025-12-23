@@ -352,7 +352,7 @@ const PropertyDetailsPage = ( ) => {
         )}
 
         {/* Admin Buttons */}
-        {localStorage.getItem('email') === "admin@gmail.com" && (
+        {isAdmin && (
           <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
             {!isEditMode ? (
               <button 
@@ -612,3 +612,4 @@ const PropertyDetailsPage = ( ) => {
 };
 
 export default PropertyDetailsPage;
+
