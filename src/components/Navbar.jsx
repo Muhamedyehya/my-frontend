@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaUserPlus, FaSignInAlt, FaSignOutAlt, FaTh, FaBars, FaTimes } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, logout } = useAuth(); // استخدم الـ context
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const colors = {
@@ -25,17 +26,8 @@ const Navbar = () => {
     boxShadow: "0 4px 30px rgba(0, 0, 0, 0.3)"
   };
 
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-  }, [location]);
-
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('email');
-    localStorage.removeItem('token');
-    setIsLoggedIn(false);
+    logout();
     setIsMobileMenuOpen(false);
     navigate('/');
   };
@@ -111,16 +103,6 @@ const Navbar = () => {
                       gap: 8,
                       transition: 'all 0.3s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      if (!isActive('/AddPropertyPage')) {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive('/AddPropertyPage')) {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                      }
-                    }}
                   >
                     <FaTh /> لوحة التحكم
                   </button>
@@ -140,14 +122,6 @@ const Navbar = () => {
                       alignItems: 'center',
                       gap: 8,
                       transition: 'all 0.3s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 20px rgba(220,38,38,0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     <FaSignOutAlt /> تسجيل الخروج
@@ -171,16 +145,6 @@ const Navbar = () => {
                       gap: 8,
                       transition: 'all 0.3s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      if (!isActive('/loginPage')) {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive('/loginPage')) {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                      }
-                    }}
                   >
                     <FaSignInAlt /> تسجيل الدخول
                   </button>
@@ -200,14 +164,6 @@ const Navbar = () => {
                       alignItems: 'center',
                       gap: 8,
                       transition: 'all 0.3s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 20px rgba(59,130,246,0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     <FaUserPlus /> إنشاء حساب
